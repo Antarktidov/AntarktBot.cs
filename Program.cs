@@ -10,11 +10,6 @@ namespace AntarktBot
     class Program
     {
         DiscordSocketClient client;
-        //Значения по умолчанию
-        string wikiName = "losyash-library";
-        string wikiLang = "ru";
-        string wikiHosting = "fandom";
-        string wikiOutput;
 
         static void Main(string[] args)
             => new Program().MainAsync().GetAwaiter().GetResult();
@@ -42,6 +37,18 @@ namespace AntarktBot
 
         private Task CommandsHandler(SocketMessage msg)
         {
+            //Значения по умолчанию
+            string wikiName = "losyash-library";
+            string wikiLang = "ru";
+            string wikiHosting = "fandom";
+            string wikiOutput = "";
+            string leftMark = "<";
+            string rightMark = ">";
+            string wikiLink = "";
+            string Template = "";
+            bool isTemplate = false;
+
+
             if (!msg.Author.IsBot)
             {
                 switch (msg.Content) 
@@ -125,14 +132,28 @@ namespace AntarktBot
                         msg.Channel.SendMessageAsync($"У меня {botitem}, а у тебя {useritem}. Ты выйграл");
                     }
                 }
-                if (msg.Content.Contains("[[") && msg.Content.Contains("]]"))
+                if ((msg.Content.Contains("[[") && msg.Content.Contains("]]")) || (msg.Content.Contains("{{") && msg.Content.Contains("}}")))
                 {
 
                     Console.WriteLine($"Текст {msg.Content} соддержит вики-ссылку");
                     string  Content = msg.Content;
                     Console.WriteLine($"Content: {Content}");
-                    string wikiLink = Content.Substring(Content.IndexOf("[") + 2 , Content.IndexOf("]") - 2);
-                    Console.WriteLine($"Текст вики-ссылки: {wikiLink}");
+
+                    if (msg.Content.Contains("[[") && msg.Content.Contains("]]"))
+                    {
+                        wikiLink = Content.Substring(Content.IndexOf("[") + 2 , Content.IndexOf("]") - 2);
+                        Console.WriteLine($"Текст вики-ссылки: {wikiLink}");
+                    }
+                    else if (msg.Content.Contains("{{") && msg.Content.Contains("}}"))
+                    {
+                        wikiLink = Content.Substring(Content.IndexOf("{") + 2 , Content.IndexOf("}") - 2);
+                        Console.WriteLine($"Текст вики-ссылки: {wikiLink}");
+
+                        isTemplate = true;
+
+                    }
+
+                    wikiLink = wikiLink.Replace(" ", "_");
 
                     if (wikiLink.StartsWith("w:c:"))
                     {
@@ -142,10 +163,10 @@ namespace AntarktBot
 
                         string lUrl = wikiLink.Substring(0, wikiLink.IndexOf(":"));
                         Console.WriteLine($"Lurl: {lUrl}");
-
+ 
                         if (lUrl.Contains("."))
                         {
-                            wikiLang = lUrl.Substring(0, 2);;
+                            wikiLang = lUrl.Substring(0, 2);
                             Console.WriteLine($"wikiLang: {wikiLang}");
 
                             wikiName = lUrl.Substring(3);
@@ -160,6 +181,21 @@ namespace AntarktBot
                         wikiLink = wikiLink.Substring(wikiLink.IndexOf(":") + 1);
                         Console.WriteLine($"Текст вики-ссылки (3):{wikiLink}");
                     }
+
+                    if (wikiLink.StartsWith("ruwikipedia"))
+                    {
+                        wikiHosting = "wikipedia";
+                        wikiLang = "ru";
+                        wikiLink = wikiLink.Substring(12);
+                    }
+
+                    if (wikiLink.StartsWith("File:") || wikiLink.StartsWith("Файл:"))
+                    {
+                        wikiLink = wikiLink.Substring(5);
+                        wikiLink = $"Special:Redirect/file?wpvalue={wikiLink}";
+                        leftMark = "";
+                        rightMark = "";
+                    }
                     
                     switch(wikiHosting)
                     {
@@ -172,7 +208,38 @@ namespace AntarktBot
                                 wikiLang = "";
                             }
 
-                            wikiOutput = $"<https://{wikiName}.fandom.com/{wikiLang}wiki/{wikiLink}>";
+                            if (isTemplate)
+                            {
+                                if (wikiLang == "ru/")
+                                {
+                                    Template = "Шаблон:";
+                                }
+                                else
+                                {
+                                    Template = "Template:";
+                                }
+                            }
+
+                            wikiOutput = $"{leftMark}https://{wikiName}.fandom.com/{wikiLang}wiki/{Template}{wikiLink}{rightMark}";
+                            Console.WriteLine("Фэндом");
+                            break;
+
+                        case "wikipedia":
+                            if (isTemplate)
+                            {
+                                if (wikiLang == "ru")
+                                {
+                                    Template = "Шаблон:";
+                                }
+                                else
+                                {
+                                    Template = "Template:";
+                                }
+                            }
+
+                            wikiOutput = $"{leftMark}https://{wikiLang}.wikipedia.org/wiki/{Template}{wikiLink}{rightMark}";
+                            Console.WriteLine(wikiLink);
+                            Console.WriteLine("Википедия");
                             break;
                     }
 
