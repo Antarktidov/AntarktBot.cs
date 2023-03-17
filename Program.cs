@@ -141,7 +141,7 @@ namespace AntarktBot
 
                     if (msg.Content.Contains("[[") && msg.Content.Contains("]]"))
                     {
-                        wikiLink = Content.Substring(Content.IndexOf("[") + 2 , Content.IndexOf("]") - 2);
+                        wikiLink = Content.Substring(Content.IndexOf("[") + 2 , Content.IndexOf("]") - Content.IndexOf("[") - 2);
                         Console.WriteLine($"Текст вики-ссылки: {wikiLink}");
                     }
                     else if (msg.Content.Contains("{{") && msg.Content.Contains("}}"))
@@ -182,11 +182,50 @@ namespace AntarktBot
                         Console.WriteLine($"Текст вики-ссылки (3):{wikiLink}");
                     }
 
-                    if (wikiLink.StartsWith("ruwikipedia"))
+                    if (wikiLink.StartsWith("ruwikipedia:"))
                     {
                         wikiHosting = "wikipedia";
                         wikiLang = "ru";
                         wikiLink = wikiLink.Substring(12);
+                    }
+
+                    if (wikiLink.StartsWith("commons:"))
+                    {
+                        wikiHosting = "commons";
+                        wikiLang = "en";
+                        wikiLink = wikiLink.Substring(8);
+                    }
+
+                    if (wikiLink.StartsWith("mw:"))
+                    {
+                        wikiHosting = "mediawiki";
+                        wikiLang = "en";
+                        wikiLink = wikiLink.Substring(3);
+                    }
+
+                    if (wikiLink.StartsWith("mh:"))
+                    {
+                        wikiHosting = "miraheze";
+                        wikiLang = "en";
+
+                        wikiLink = wikiLink.Substring(3);
+                        Console.WriteLine($"Текст вики-ссылки (2):{wikiLink}");
+                        
+                        wikiName = wikiLink.Substring(0, wikiLink.IndexOf(":"));
+                        Console.WriteLine($"wikiName:{wikiName}");
+                        Console.WriteLine($"Текст вики-ссылки (3):{wikiLink}");
+
+                        wikiLink = wikiLink.Substring(wikiLink.IndexOf(":") + 1);
+                        Console.WriteLine($"Текст вики-ссылки (4):{wikiLink}");
+
+                        /*
+                        wikiHosting = "fandom";
+                        wikiLink = wikiLink.Substring(4);
+                        Console.WriteLine($"Текст вики-ссылки (2):{wikiLink}");
+
+                        string lUrl = wikiLink.Substring(0, wikiLink.IndexOf(":"));
+                        Console.WriteLine($"Lurl: {lUrl}");
+                        */
                     }
 
                     if (wikiLink.StartsWith("File:") || wikiLink.StartsWith("Файл:"))
@@ -240,6 +279,38 @@ namespace AntarktBot
                             wikiOutput = $"{leftMark}https://{wikiLang}.wikipedia.org/wiki/{Template}{wikiLink}{rightMark}";
                             Console.WriteLine(wikiLink);
                             Console.WriteLine("Википедия");
+                            break;
+
+                        case "mediawiki":
+                            if (isTemplate)
+                            {
+                                Template = "Template:";
+                            }
+
+                            wikiOutput = $"{leftMark}https://mediawiki.org/wiki/{Template}{wikiLink}{rightMark}";
+                            Console.WriteLine(wikiLink);
+                            Console.WriteLine("MediaWiki.org");
+                            break;
+
+                        case "commons":
+                            if (isTemplate)
+                            {
+                                Template = "Template:";
+                            }
+
+                            wikiOutput = $"{leftMark}https://commons.wikimedia.org/wiki/{Template}{wikiLink}{rightMark}";
+                            Console.WriteLine(wikiLink);
+                            Console.WriteLine("Wikimedia Commons");
+                            break;
+
+                        case "miraheze":
+                            if (isTemplate)
+                            {
+                                Template = "Template:";
+                            }
+
+                            wikiOutput = $"{leftMark}https://{wikiName}.miraheze.org/wiki/{Template}{wikiLink}{rightMark}";
+                            Console.WriteLine("Мирахез");
                             break;
                     }
 
